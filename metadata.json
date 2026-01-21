@@ -1,0 +1,8 @@
+{
+  "name": "Smart Doc-Tracker",
+  "description": "A logistics-inspired document tracking mini-app to manage physical files with QR/Barcode scanning, real-time journey visualization, and AI-powered bottleneck detection.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
