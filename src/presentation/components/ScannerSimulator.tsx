@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Camera, X, Scan, Zap } from 'lucide-react';
 
 interface ScannerSimulatorProps {
@@ -8,7 +8,6 @@ interface ScannerSimulatorProps {
 }
 
 const ScannerSimulator: React.FC<ScannerSimulatorProps> = ({ onScan, onClose }) => {
-  const [scanning, setScanning] = useState(true);
 
   useEffect(() => {
     // Simulate finding a code after 2 seconds
@@ -32,10 +31,10 @@ const ScannerSimulator: React.FC<ScannerSimulatorProps> = ({ onScan, onClose }) 
       <div className="relative w-64 h-64 border-2 border-blue-500 rounded-2xl overflow-hidden">
         <div className="absolute inset-0 bg-blue-500/10 animate-pulse" />
         <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-[scan_2s_infinite]" />
-        
+
         {/* Mock Camera Feed */}
         <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
-           <Scan className="w-24 h-24 text-white/20" />
+          <Scan className="w-24 h-24 text-white/20" />
         </div>
       </div>
 

@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { Plus, Printer, QrCode, Search, CheckCircle2, ChevronRight, MapPin, Clock, AlignLeft } from 'lucide-react';
-import { Document, DocStatus } from '../types';
-import { DEPARTMENTS, CATEGORIES, STATUS_MAP } from '../constants';
+import { Document } from '../../../domain/entities/Document';
+import { DocStatus, DEPARTMENTS, CATEGORIES, STATUS_CONFIG } from '../../../shared/constants';
+import { STATUS_ICONS } from '../../../shared/config/statusUI';
 
 interface CreatorPortalProps {
   documents: Document[];
@@ -59,7 +60,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
     setFormData({ title: '', description: '', department: DEPARTMENTS[0].id, category: CATEGORIES[0].id });
   };
 
-  const myDocs = documents.sort((a, b) => 
+  const myDocs = documents.sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -68,7 +69,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
       {/* Action Header */}
       <div className="flex items-center justify-between mb-2 px-2">
         <h2 className="text-xl font-bold text-slate-800">Quản lý Khởi tạo</h2>
-        <button 
+        <button
           onClick={() => setIsCreating(true)}
           className="bg-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-200 active:scale-95 transition-transform"
         >
@@ -84,12 +85,12 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Tên hồ sơ</label>
-                <input 
+                <input
                   autoFocus
                   required
                   type="text"
                   value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
                   className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20"
                   placeholder="Ví dụ: Hợp đồng đại lý X"
                 />
@@ -97,21 +98,21 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
 
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Ghi chú ban đầu</label>
-                <textarea 
+                <textarea
                   value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20"
                   placeholder="Nhập nội dung ghi chú cho hồ sơ..."
                   rows={3}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Phòng ban</label>
-                  <select 
+                  <select
                     value={formData.department}
-                    onChange={e => setFormData({...formData, department: e.target.value})}
+                    onChange={e => setFormData({ ...formData, department: e.target.value })}
                     className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm"
                   >
                     {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
@@ -119,9 +120,9 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Loại chứng từ</label>
-                  <select 
+                  <select
                     value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
                     className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm"
                   >
                     {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -130,14 +131,14 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsCreating(false)}
                   className="flex-1 py-4 text-sm font-bold text-slate-400 hover:text-slate-600"
                 >
                   Hủy bỏ
                 </button>
-                <button 
+                <button
                   type="submit"
                   className="flex-1 bg-blue-600 text-white py-4 rounded-2xl text-sm font-bold shadow-xl shadow-blue-100"
                 >
@@ -163,18 +164,18 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
               <h4 className="text-xl font-bold text-slate-800 mb-1">{showPrintModal.id}</h4>
               <p className="text-slate-500 text-sm">{showPrintModal.title}</p>
             </div>
-            
+
             <div className="p-6 space-y-3">
-              <button 
+              <button
                 onClick={() => {
-                   window.print();
-                   setShowPrintModal(null);
+                  window.print();
+                  setShowPrintModal(null);
                 }}
                 className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl"
               >
                 <Printer className="w-5 h-5" /> In mã QR (Mini Printer)
               </button>
-              <button 
+              <button
                 onClick={() => setShowPrintModal(null)}
                 className="w-full py-4 text-slate-400 font-bold text-sm"
               >
@@ -189,7 +190,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">Theo dõi hiện trạng</h3>
         {myDocs.map(doc => (
-          <div 
+          <div
             key={doc.id}
             onClick={() => onSelectDoc(doc)}
             className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4 active:bg-slate-50 transition-colors"
@@ -199,8 +200,8 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                 <p className="text-[10px] font-bold text-blue-600 mb-1">{doc.id}</p>
                 <h4 className="font-bold text-slate-800 truncate">{doc.title}</h4>
               </div>
-              <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${STATUS_MAP[doc.currentStatus].color}`}>
-                {STATUS_MAP[doc.currentStatus].label}
+              <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${STATUS_CONFIG[doc.currentStatus].color}`}>
+                {STATUS_CONFIG[doc.currentStatus].label}
               </div>
             </div>
 
@@ -236,9 +237,9 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
 
             <div className="flex items-center justify-between pt-2">
               <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden mr-4">
-                <div 
+                <div
                   className="h-full bg-blue-500 rounded-full transition-all duration-700"
-                  style={{ width: `${(STATUS_MAP[doc.currentStatus].step / 5) * 100}%` }}
+                  style={{ width: `${(STATUS_CONFIG[doc.currentStatus].step / 5) * 100}%` }}
                 />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-300" />
@@ -249,7 +250,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
         {myDocs.length === 0 && (
           <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-               <QrCode className="w-8 h-8 text-slate-300" />
+              <QrCode className="w-8 h-8 text-slate-300" />
             </div>
             <p className="text-slate-400 text-sm px-8">Bạn chưa khởi tạo hồ sơ nào. Bấm nút + để bắt đầu.</p>
           </div>
