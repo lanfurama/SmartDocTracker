@@ -27,6 +27,7 @@ import { useDocuments } from './src/presentation/hooks/useDocuments';
 import { useDocumentInsights } from './src/presentation/hooks/useAiInsights';
 import { useScanner, useTabNavigation } from './src/presentation/hooks/useScanner';
 import { documentRepository } from './src/infrastructure/repositories/DocumentRepository';
+import { MOCK_DOCUMENTS } from './src/shared/mocks/mockDocuments';
 
 // Components
 import ScannerSimulator from './src/presentation/components/ScannerSimulator';
@@ -38,12 +39,14 @@ const App: React.FC = () => {
   // Hooks
   const { activeTab, setActiveTab } = useTabNavigation('home');
   const { showScanner, openScanner, closeScanner } = useScanner();
-  const [initialDocs, setInitialDocs] = useState<Document[]>([]);
+  const [initialDocs, setInitialDocs] = useState<Document[]>(MOCK_DOCUMENTS);
 
-  // Load initial docs
+  // Load initial docs - DISABLED FOR MOCK MODE
+  /*
   React.useEffect(() => {
     documentRepository.getAll().then(docs => setInitialDocs(docs));
   }, []);
+  */
 
   const {
     documents,

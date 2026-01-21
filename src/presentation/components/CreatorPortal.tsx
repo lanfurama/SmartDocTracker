@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { Plus, Printer, QrCode, Search, CheckCircle2, ChevronRight, MapPin, Clock, AlignLeft } from 'lucide-react';
-import { Document } from '../../../domain/entities/Document';
-import { DocStatus, DEPARTMENTS, CATEGORIES, STATUS_CONFIG } from '../../../shared/constants';
-import { STATUS_ICONS } from '../../../shared/config/statusUI';
+import { Document } from '../../domain/entities/Document';
+import { DocStatus, DEPARTMENTS, CATEGORIES, STATUS_CONFIG } from '../../shared/constants';
+import { STATUS_ICONS } from '../../shared/config/statusUI';
 
 interface CreatorPortalProps {
   documents: Document[];
