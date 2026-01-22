@@ -1,4 +1,6 @@
 import checkConnection from '../../db';
+import documentsRouter from './documents';
+import analyticsRouter from './analytics';
 
 const router = express.Router();
 
@@ -14,5 +16,8 @@ router.get('/check-db', async (req, res) => {
         res.status(500).json(result);
     }
 });
+
+router.use('/documents', documentsRouter);
+router.use('/analytics', analyticsRouter);
 
 export default router;
