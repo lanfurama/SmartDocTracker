@@ -1,0 +1,463 @@
+openapi: 3.0.3
+info:
+  title: Smart Doc-Tracker API
+  description: |
+    Backend API for Smart Doc-Tracker - Document tracking system using Logistics model
+    
+    ## Features
+    - Document CRUD operations with QR code support
+    - Real-time status tracking
+    - Analytics and reporting
+    - Search, filter, and pagination
+    - Automatic bottleneck detection
+    
+    ## Authentication
+    Most endpoints require JWT authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <token>
+    ```
+  version: 1.0.0
+  contact:
+    name: Smart Doc-Tracker Team
+    email: support@smartdoctracker.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.smartdoctracker.com/api/v1
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentication and user management
+  - name: Documents
+    description: Document CRUD and status management
+  - name: Analytics
+    description: Statistics and reporting
+  - name: System
+    description: System health and diagnostics
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        qrCode:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        department:
+          type: string
+        category:
+          type: string
+        currentStatus:
+          type: string
+          enum: [SENDING, TRANSIT_DA_NANG, TRANSIT_HCM, PROCESSING, COMPLETED, RETURNED]
+        currentHolder:
+          type: string
+        lastUpdate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        isBottleneck:
+          type: boolean
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+
+    LogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+        location:
+          type: string
+        user:
+          type: string
+        type:
+          type: string
+          enum: [in, out, info, error]
+        notes:
+          type: string
+
+    PaginatedDocuments:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+
+  /check-db:
+    get:
+      tags: [System]
+      summary: Database connection check
+      responses:
+        '200':
+          description: Database connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  time:
+                    type: string
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                  minLength: 2
+                role:
+                  type: string
+                  enum: [admin, user, viewer]
+                  default: user
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                  token:
+                    type: string
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user info
+        '401':
+          description: Unauthorized
+
+  /documents:
+    get:
+      tags: [Documents]
+      summary: List all documents
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: Search query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDocuments'
+
+    post:
+      tags: [Documents]
+      summary: Create new document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Document created
+        '400':
+          description: Validation error
+        '409':
+          description: Duplicate QR code
+
+  /documents/{id}:
+    get:
+      tags: [Documents]
+      summary: Get document by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '404':
+          description: Document not found
+
+  /documents/qr/{code}:
+    get:
+      tags: [Documents]
+      summary: Get document by QR code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document details
+        '404':
+          description: Document not found
+
+  /documents/{id}/actions:
+    post:
+      tags: [Documents]
+      summary: Update document status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newStatus, action, location, user, type]
+              properties:
+                newStatus:
+                  type: string
+                action:
+                  type: string
+                location:
+                  type: string
+                user:
+                  type: string
+                notes:
+                  type: string
+                type:
+                  type: string
+                  enum: [in, out, info, error]
+      responses:
+        '200':
+          description: Status updated
+        '400':
+          description: Validation error (e.g., return without notes)
+        '404':
+          description: Document not found
+
+  /analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: Get overall statistics
+      responses:
+        '200':
+          description: Overview statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalDocs:
+                    type: integer
+                  completed:
+                    type: integer
+                  processing:
+                    type: integer
+                  bottlenecks:
+                    type: integer
+                  inTransit:
+                    type: integer
+
+  /analytics/by-department:
+    get:
+      tags: [Analytics]
+      summary: Statistics by department
+      responses:
+        '200':
+          description: Department breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    department:
+                      type: string
+                    total:
+                      type: integer
+                    completed:
+                      type: integer
+                    bottlenecks:
+                      type: integer
+                    avgProcessingHours:
+                      type: string
+
+  /analytics/by-category:
+    get:
+      tags: [Analytics]
+      summary: Statistics by category
+      responses:
+        '200':
+          description: Category breakdown
+
+  /analytics/timeline:
+    get:
+      tags: [Analytics]
+      summary: Historical analytics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 7
+      responses:
+        '200':
+          description: Timeline data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    created:
+                      type: integer
+                    completed:
+                      type: integer
+                    bottlenecks:
+                      type: integer

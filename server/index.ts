@@ -2,7 +2,14 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import apiV1Router from './api/v1/index';
+import { errorHandler } from './middleware/errorHandler';
+import { sanitizeInput } from './middleware/validation';
+import { logger } from './utils/logger';
+import { startBottleneckDetection } from './jobs/bottleneckDetector';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,52 +25,58 @@ async function createServer() {
         appType: 'custom'
     });
 
-    // Use vite's connect instance as middleware. If you use your own
-    // express router (express.Router()), you should use router.use
-    app.use(vite.middlewares);
+    // Security middleware
+    app.use(helmet({
+        contentSecurityPolicy: false, // Disable for Vite dev mode
+        crossOriginEmbedderPolicy: false
+    }));
 
-    // API Routes
-    app.use('/api/v1', apiV1Router);
+    app.use(cors({
+        origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+        credentials: true
+    }));
 
-    // Serve HTML
-    app.use('*', async (req, res, next) => {
-        const url = req.originalUrl;
+    // Rate limiting
+    const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+        message: 'Too many requests from this IP, please try again later'
+    });
+    app.use('/api/', limiter);
 
-        try {
-            // 1. Read index.html
-            let template = await vite.transformIndexHtml(url, '');
+    // Body parsing
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
 
-            // Note: In development mode with 'custom' appType, we need to manually read the index.html from root
-            // However, vite.transformIndexHtml without content argument usually fetches it from root.
-            // Alternatively, we can read it manually:
-            /*
-            import fs from 'fs';
-            let template = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf-8');
-            template = await vite.transformIndexHtml(url, template);
-            */
+    // Input sanitization
+    app.use(sanitizeInput);
 
-            // Simpler approach for pure dev setup: let Vite serve the index.html if no other route matches.
-            // But since we set appType: 'custom', we are responsible.
-            // Using a simpler trick: Re-read file from disk (or let Vite handle it via transformIndexHtml with manual read)
-            const fs = await import('fs');
-            const templateContent = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf-8');
-            template = await vite.transformIndexHtml(url, templateContent);
-
-            // 2. Apply Vite HTML transforms. This injects the HMR client, and
-            //    also applies HTML plugins.
-
-            // 3. Send the HTML back.
-            res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
-        } catch (e) {
-            // If an error is caught, let Vite fix the stack trace so it maps back
-            // to your actual source code.
-            vite.ssrFixStacktrace(e as Error);
-            next(e);
-        }
+    // Request logging
+    app.use((req, res, next) => {
+        logger.info('Incoming request', {
+            method: req.method,
+            url: req.url,
+            ip: req.ip
+        });
+        next();
     });
 
+    // API Routes (must be before Vite middleware to avoid conflicts)
+    app.use('/api/v1', apiV1Router);
+
+    // Use vite's connect instance as middleware
+    // Vite will handle serving index.html for unmatched routes (SPA fallback)
+    app.use(vite.middlewares);
+
+    // Global error handler (must be last)
+    app.use(errorHandler);
+
     app.listen(PORT, () => {
+        logger.info(`Server started at http://localhost:${PORT}`);
         console.log(`Server started at http://localhost:${PORT}`);
+
+        // Start background jobs
+        startBottleneckDetection();
     });
 }
 

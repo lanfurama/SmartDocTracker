@@ -1,9 +1,9 @@
-import spread from 'pg';
+import pg from 'pg';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { Pool } = spread;
+const { Pool } = pg;
 
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
@@ -14,6 +14,7 @@ const pool = new Pool({
 });
 
 export const query = (text: string, params?: any[]) => pool.query(text, params);
+export const getPool = () => pool;
 export const checkConnection = async () => {
     try {
         const res = await pool.query('SELECT NOW()');

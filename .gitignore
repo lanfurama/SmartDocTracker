@@ -1,3 +1,20 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.env
+
+# Database
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+database/*.sql
+database/backups/
+database/dumps/
+
 # Logs
 logs
 *.log
@@ -7,10 +24,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
 *.local
+
+# Build outputs
+build/
+out/
+.cache/
+
+# Sensitive files
+*.pem
+*.key
+*.cert
+*-secret.json
+secrets/
+credentials/
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +53,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
