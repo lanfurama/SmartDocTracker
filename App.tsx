@@ -34,25 +34,26 @@ import ScannerSimulator from './src/presentation/components/ScannerSimulator';
 import TrackingTimeline from './src/presentation/components/TrackingTimeline';
 import AnalyticsBoard from './src/presentation/components/AnalyticsBoard';
 import CreatorPortal from './src/presentation/components/CreatorPortal';
+import NotFoundModal from './src/presentation/components/NotFoundModal';
+import RecentScans from './src/presentation/components/RecentScans';
 
 const App: React.FC = () => {
   // Hooks
   const { activeTab, setActiveTab } = useTabNavigation('home');
   const { showScanner, openScanner, closeScanner } = useScanner();
-  const [initialDocs, setInitialDocs] = useState<Document[]>(MOCK_DOCUMENTS);
+  const [initialDocs, setInitialDocs] = useState<Document[]>([]);
 
-  // Load initial docs - DISABLED FOR MOCK MODE
-  /*
+  // Load initial docs from API
   React.useEffect(() => {
     documentRepository.getAll().then(docs => setInitialDocs(docs));
   }, []);
-  */
 
   const {
     documents,
     selectedDoc,
     searchQuery,
     filteredDocs,
+    scanLoading,
     setSearchQuery,
     selectDoc,
     addDocument,
@@ -65,11 +66,57 @@ const App: React.FC = () => {
   // Modal state
   const [showActionModal, setShowActionModal] = useState<'receive' | 'transfer' | 'return' | null>(null);
   const [note, setNote] = useState('');
+  const [notFoundQR, setNotFoundQR] = useState<string | null>(null);
+  const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
+
+  // Detect newly created "unknown" documents
+  React.useEffect(() => {
+    if (selectedDoc && lastScannedCode) {
+      if (selectedDoc.title === 'Hồ sơ chưa xác định' && selectedDoc.id === lastScannedCode) {
+        setNotFoundQR(lastScannedCode);
+        setLastScannedCode(null);
+      }
+    }
+  }, [selectedDoc, lastScannedCode]);
 
   // Handle scan
-  const onScan = (code: string) => {
+  const onScan = async (code: string) => {
     closeScanner();
-    handleScanResult(code);
+    setLastScannedCode(code);
+    try {
+      await handleScanResult(code);
+    } catch (error) {
+      console.error('Scan error:', error);
+      setNotFoundQR(code);
+    }
+  };
+
+  // Record scan history when selectedDoc changes
+  React.useEffect(() => {
+    if (selectedDoc && lastScannedCode && selectedDoc.id === lastScannedCode) {
+      const { ScanHistoryService } = require('./src/infrastructure/services/ScanHistoryService');
+      ScanHistoryService.add({
+        qrCode: lastScannedCode,
+        documentId: selectedDoc.id,
+        documentTitle: selectedDoc.title,
+        status: selectedDoc.title === 'Hồ sơ chưa xác định' ? 'not_found' : 'found'
+      });
+      console.log('[ScanHistory] Saved:', { qrCode: lastScannedCode, title: selectedDoc.title });
+    }
+  }, [selectedDoc, lastScannedCode]);
+
+  // Handle create new from not found
+  const handleCreateNew = async () => {
+    setNotFoundQR(null);
+    // Navigate to creator portal with pre-filled QR
+    setActiveTab('creator');
+  };
+
+  // Handle scan again
+  const handleScanAgain = () => {
+    setNotFoundQR(null);
+    selectDoc(null);
+    openScanner();
   };
 
   // Handle action
@@ -146,7 +193,7 @@ const App: React.FC = () => {
               )}
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Mã vận đơn: {selectedDoc.id}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Mã hồ sơ: {selectedDoc.id}</p>
                   <h2 className="text-lg font-bold text-slate-800 leading-snug break-words">{selectedDoc.title}</h2>
                   {selectedDoc.description && (
                     <div className="mt-2 flex items-start gap-2 text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
@@ -162,35 +209,58 @@ const App: React.FC = () => {
                   {STATUS_ICONS[selectedDoc.currentStatus]}
                   {STATUS_CONFIG[selectedDoc.currentStatus].label}
                 </div>
-                <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${(STATUS_CONFIG[selectedDoc.currentStatus].step / 5) * 100}%` }}
-                  />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-slate-400 font-medium">Tiến độ</span>
+                    <span className="text-[10px] text-blue-600 font-bold">Bước {STATUS_CONFIG[selectedDoc.currentStatus].step}/5</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 rounded-full"
+                      style={{ width: `${(STATUS_CONFIG[selectedDoc.currentStatus].step / 5) * 100}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* AI Insight Box */}
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-5 rounded-2xl shadow-xl shadow-blue-200 text-white relative">
-              <Sparkles className="absolute top-4 right-4 w-6 h-6 text-white/20" />
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1 bg-white/20 rounded-lg">
-                  <Sparkles className="w-3 h-3 text-white" />
+            {/* AI Insight Box - Only show if document has history */}
+            {selectedDoc.history.length > 1 && (
+              <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-5 rounded-2xl shadow-xl shadow-blue-200 text-white relative">
+                <Sparkles className="absolute top-4 right-4 w-6 h-6 text-white/20" />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1 bg-white/20 rounded-lg">
+                    <Sparkles className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">AI Phân tích hành trình</span>
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">AI Phân tích hành trình</span>
+                {loadingAi ? (
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span className="text-sm italic text-white/60">Đang phân tích thông minh...</span>
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium leading-relaxed">
+                    {aiInsights || "Sẵn sàng phân tích dữ liệu luân chuyển của hồ sơ này."}
+                  </p>
+                )}
               </div>
-              {loadingAi ? (
-                <div className="flex items-center gap-3 py-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span className="text-sm italic text-white/60">Đang phân tích thông minh...</span>
+            )}
+
+            {/* New document tips - Show for documents with minimal history */}
+            {selectedDoc.history.length === 1 && (
+              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-2xl shadow-xl shadow-emerald-200 text-white relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1 bg-white/20 rounded-lg">
+                    <PackageCheck className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">Hồ sơ mới</span>
                 </div>
-              ) : (
                 <p className="text-sm font-medium leading-relaxed">
-                  {aiInsights || "Sẵn sàng phân tích dữ liệu luân chuyển của hồ sơ này."}
+                  Hồ sơ vừa được quét lần đầu tiên. Chọn hành động bên dưới để bắt đầu luân chuyển.
                 </p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Timeline */}
             <div>
@@ -234,6 +304,9 @@ const App: React.FC = () => {
                   <button className="text-xs font-semibold text-blue-600">Xem tất cả</button>
                 </div>
 
+                {/* Recent Scans Section */}
+                <RecentScans onScanSelect={(qrCode) => handleScanResult(qrCode)} />
+
                 <div className="space-y-4">
                   {filteredDocs.map(doc => (
                     <div
@@ -273,19 +346,18 @@ const App: React.FC = () => {
                     <h4 className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-4">Hiệu quả luân chuyển</h4>
                     <div className="flex justify-between items-end">
                       <div>
-                        <div className="text-3xl font-bold">94.2%</div>
-                        <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" /> +2.4% tuần này
+                        <div className="text-3xl font-bold">
+                          {documents.length === 0 ? '--' :
+                            ((documents.filter(d => d.currentStatus === 'COMPLETED').length / documents.length) * 100).toFixed(1)}%
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {documents.filter(d => d.currentStatus === 'COMPLETED').length}/{documents.length} hoàn thành
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-white/60 mb-1">Xử lý đúng hạn</p>
-                        <div className="flex -space-x-2">
-                          {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="w-6 h-6 rounded-full border-2 border-slate-800 overflow-hidden">
-                              <img src={`https://picsum.photos/32/32?random=${i}`} alt="user" />
-                            </div>
-                          ))}
+                        <p className="text-xs text-white/60 mb-1">Đang xử lý</p>
+                        <div className="text-2xl font-bold">
+                          {documents.filter(d => d.currentStatus === 'PROCESSING').length}
                         </div>
                       </div>
                     </div>
@@ -412,6 +484,29 @@ const App: React.FC = () => {
         <ScannerSimulator
           onScan={onScan}
           onClose={closeScanner}
+        />
+      )}
+
+      {/* Loading Overlay khi đang lookup document */}
+      {scanLoading && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 max-w-sm mx-4">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-center">
+              <h3 className="font-bold text-slate-800 text-lg mb-1">Đang tra cứu hồ sơ...</h3>
+              <p className="text-slate-500 text-sm">Vui lòng đợi trong giây lát</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Not Found Modal */}
+      {notFoundQR && (
+        <NotFoundModal
+          qrCode={notFoundQR}
+          onCreateNew={handleCreateNew}
+          onScanAgain={handleScanAgain}
+          onClose={() => setNotFoundQR(null)}
         />
       )}
     </div>

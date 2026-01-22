@@ -36,7 +36,7 @@ const TrackingTimeline: React.FC<TrackingTimelineProps> = ({ history }) => {
               </div>
               <div className="flex items-center gap-2">
                 <User className="w-3 h-3 text-blue-500" />
-                <span>Người phụ trách: <b>{log.user}</b></span>
+                <span>Nhân viên: <b>{log.user}</b></span>
               </div>
               {log.notes && (
                 <div className="mt-2 p-2 bg-blue-50/50 rounded-lg text-blue-700 italic border-l-2 border-blue-200">

@@ -67,7 +67,7 @@ export const createNewDocumentFromScan = (code: string): Document => {
     return {
         id: code,
         qrCode: code,
-        title: 'Hồ sơ quét từ mã lạ',
+        title: 'Hồ sơ chưa xác định',
         currentStatus: DocStatus.SENDING,
         currentHolder: 'Người giao',
         lastUpdate: new Date().toISOString(),

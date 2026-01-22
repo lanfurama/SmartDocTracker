@@ -4,6 +4,7 @@ import { Plus, Printer, QrCode, Search, CheckCircle2, ChevronRight, MapPin, Cloc
 import { Document } from '../../domain/entities/Document';
 import { DocStatus, DEPARTMENTS, CATEGORIES, STATUS_CONFIG } from '../../shared/constants';
 import { STATUS_ICONS } from '../../shared/config/statusUI';
+import { apiClient } from '../../infrastructure/api/apiClient';
 
 interface CreatorPortalProps {
   documents: Document[];
@@ -13,6 +14,7 @@ interface CreatorPortalProps {
 
 const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSelectDoc }) => {
   const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,43 +23,43 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
   });
   const [showPrintModal, setShowPrintModal] = useState<Document | null>(null);
 
-  const generateId = () => {
-    const date = new Date();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yy = String(date.getFullYear()).slice(-2);
-    const serial = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
-    return `${formData.department}-${formData.category}-${mm}${yy}-${serial}`;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newId = generateId();
-    const newDoc: Document = {
-      id: newId,
-      qrCode: newId,
-      title: formData.title,
-      description: formData.description,
-      department: formData.department,
-      category: formData.category,
-      currentStatus: DocStatus.SENDING,
-      currentHolder: 'Người khởi tạo',
-      lastUpdate: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      isBottleneck: false,
-      history: [{
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        action: 'Khởi tạo hồ sơ',
-        location: 'Điểm khởi tạo',
-        user: 'Người dùng hiện tại',
-        notes: formData.description || 'Khởi tạo hồ sơ mới',
-        type: 'in'
-      }]
-    };
-    onCreate(newDoc);
-    setIsCreating(false);
-    setShowPrintModal(newDoc);
-    setFormData({ title: '', description: '', department: DEPARTMENTS[0].id, category: CATEGORIES[0].id });
+    setIsLoading(true);
+
+    try {
+      const response = await apiClient.createDocument({
+        title: formData.title,
+        department: formData.department,
+        category: formData.category,
+        notes: formData.description
+      });
+
+      const newDoc: Document = {
+        id: response.id,
+        qrCode: response.qrCode,
+        title: response.title,
+        description: formData.description,
+        department: response.department,
+        category: response.category,
+        currentStatus: response.currentStatus as DocStatus,
+        currentHolder: response.currentHolder,
+        lastUpdate: response.lastUpdate,
+        createdAt: response.createdAt,
+        isBottleneck: response.isBottleneck,
+        history: response.history
+      };
+
+      onCreate(newDoc);
+      setIsCreating(false);
+      setShowPrintModal(newDoc);
+      setFormData({ title: '', description: '', department: DEPARTMENTS[0].id, category: CATEGORIES[0].id });
+    } catch (error) {
+      console.error('Failed to create document:', error);
+      alert(`Lỗi: ${error instanceof Error ? error.message : 'Không thể tạo hồ sơ'}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const myDocs = documents.sort((a, b) =>
@@ -134,15 +136,17 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                 <button
                   type="button"
                   onClick={() => setIsCreating(false)}
-                  className="flex-1 py-4 text-sm font-bold text-slate-400 hover:text-slate-600"
+                  disabled={isLoading}
+                  className="flex-1 py-4 text-sm font-bold text-slate-400 hover:text-slate-600 disabled:opacity-50"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl text-sm font-bold shadow-xl shadow-blue-100"
+                  disabled={isLoading}
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl text-sm font-bold shadow-xl shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Xác nhận
+                  {isLoading ? 'Đang tạo...' : 'Xác nhận'}
                 </button>
               </div>
             </form>

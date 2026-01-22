@@ -8,10 +8,11 @@ export interface UseDocumentsReturn {
     selectedDoc: Document | null;
     searchQuery: string;
     filteredDocs: Document[];
+    scanLoading: boolean;
     setSearchQuery: (query: string) => void;
     selectDoc: (doc: Document | null) => void;
     addDocument: (doc: Document) => void;
-    handleScanResult: (code: string) => void;
+    handleScanResult: (code: string) => Promise<void>;
     handleDocAction: (type: ActionType, note: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -19,6 +20,7 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
     const [documents, setDocuments] = useState<Document[]>(initialDocs);
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [scanLoading, setScanLoading] = useState(false);
 
     const filteredDocs = useMemo(() => {
         return documentService.filterDocuments(documents, searchQuery);
@@ -32,17 +34,32 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
         setDocuments(prev => [doc, ...prev]);
     }, []);
 
-    const handleScanResult = useCallback((code: string) => {
-        const doc = documents.find(d => d.qrCode === code);
-        if (doc) {
-            setSelectedDoc(doc);
-        } else {
-            documentService.handleScanResult(code).then(newDoc => {
-                setDocuments(prev => [newDoc, ...prev]);
-                setSelectedDoc(newDoc);
+    const handleScanResult = useCallback(async (code: string) => {
+        setScanLoading(true);
+        try {
+            // Always fetch from API to ensure we have latest data
+            const doc = await documentService.handleScanResult(code);
+
+            // Update local state
+            setDocuments(prev => {
+                const exists = prev.some(d => d.id === doc.id);
+                if (exists) {
+                    return prev.map(d => d.id === doc.id ? doc : d);
+                }
+                return [doc, ...prev];
             });
+
+            setSelectedDoc(doc);
+        } catch (error) {
+            console.error('Failed to lookup document:', error);
+            // Create a placeholder document for unknown QR codes
+            const newDoc = await documentService.handleScanResult(code);
+            setDocuments(prev => [newDoc, ...prev]);
+            setSelectedDoc(newDoc);
+        } finally {
+            setScanLoading(false);
         }
-    }, [documents]);
+    }, []);
 
     const handleDocAction = useCallback(async (
         type: ActionType,
@@ -67,6 +84,7 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
         selectedDoc,
         searchQuery,
         filteredDocs,
+        scanLoading,
         setSearchQuery,
         selectDoc,
         addDocument,
