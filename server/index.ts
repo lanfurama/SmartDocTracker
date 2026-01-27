@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -64,9 +65,28 @@ async function createServer() {
     // API Routes (must be before Vite middleware to avoid conflicts)
     app.use('/api/v1', apiV1Router);
 
-    // Use vite's connect instance as middleware
-    // Vite will handle serving index.html for unmatched routes (SPA fallback)
+    // Use vite's connect instance as middleware for static assets
     app.use(vite.middlewares);
+
+    // Serve index.html for root and SPA routes (must be after Vite middleware)
+    app.use('*', async (req, res, next) => {
+        const url = req.originalUrl;
+
+        try {
+            // Read index.html
+            const template = await fs.promises.readFile(
+                path.resolve(__dirname, '../index.html'),
+                'utf-8'
+            );
+            
+            // Transform index.html with Vite
+            const html = await vite.transformIndexHtml(url, template);
+            res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+        } catch (e) {
+            // If there's an error, pass to error handler
+            next(e);
+        }
+    });
 
     // Global error handler (must be last)
     app.use(errorHandler);
