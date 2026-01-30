@@ -57,10 +57,11 @@ Project này **có thể chạy trên Vercel** với cấu hình hiện tại. �
    Deploy → Vercel sẽ build Vite và deploy API từ `api/[[...slug]].ts`.
 
 6. **Cron (đã cấu hình trong `vercel.json`)**  
-   Mỗi giờ Vercel gọi `GET /api/v1/cron/bottleneck`. Nếu bạn set `CRON_SECRET`, endpoint chỉ chấp nhận request có header `Authorization: Bearer <CRON_SECRET>`.
+   Vercel gọi `GET /api/v1/cron/bottleneck` theo lịch trong config. **Hobby plan**: chỉ cho cron chạy **tối đa 1 lần/ngày** — hiện dùng `0 0 * * *` (mỗi ngày 00:00 UTC). Nếu nâng cấp Pro có thể đổi sang hàng giờ (`0 * * * *`). Nếu bạn set `CRON_SECRET`, endpoint chỉ chấp nhận request có header `Authorization: Bearer <CRON_SECRET>`.
 
 ## Giới hạn cần lưu ý
 
+- **Cron (Hobby)**: Tài khoản Hobby chỉ cho cron chạy **1 lần/ngày**. Đã cấu hình `0 0 * * *` (00:00 UTC). Pro plan mới chạy nhiều lần/ngày (vd. hàng giờ).
 - **Serverless**: Mỗi request API chạy trong function riêng, không có process chạy nền. Job bottleneck chỉ chạy khi Cron gọi endpoint.
 - **Cold start**: Lần gọi đầu có thể chậm ~1–2s. DB nên ở region gần Vercel (vd: `iad1`, `sfo1`).
 - **PostgreSQL**: Dùng connection pooling hoặc Postgres serverless (Neon/Supabase) để tránh vượt max connections khi traffic tăng.
