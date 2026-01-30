@@ -3,7 +3,7 @@
 Project này **có thể chạy trên Vercel** với cấu hình hiện tại. Đã chuẩn bị:
 
 - **Frontend**: Vite build → static trong `dist/`, SPA rewrite về `/index.html`.
-- **API**: Express chạy dưới dạng **Vercel Serverless Function** (catch-all `api/[[...slug]].ts`).
+- **API**: Express chạy dưới dạng **Vercel Serverless Function** (entry `api/index.ts` + rewrite `/api/:path*` → `/api?path=:path*`).
 - **Cron**: Job bottleneck chạy hàng giờ qua Vercel Cron, gọi `/api/v1/cron/bottleneck`.
 
 ## Điều kiện cần có
@@ -58,6 +58,22 @@ Project này **có thể chạy trên Vercel** với cấu hình hiện tại. �
 
 6. **Cron (đã cấu hình trong `vercel.json`)**  
    Vercel gọi `GET /api/v1/cron/bottleneck` theo lịch trong config. **Hobby plan**: chỉ cho cron chạy **tối đa 1 lần/ngày** — hiện dùng `0 0 * * *` (mỗi ngày 00:00 UTC). Nếu nâng cấp Pro có thể đổi sang hàng giờ (`0 * * * *`). Nếu bạn set `CRON_SECRET`, endpoint chỉ chấp nhận request có header `Authorization: Bearer <CRON_SECRET>`.
+
+## Debug 500 / FUNCTION_INVOCATION_FAILED
+
+Khi login hoặc gọi API bị **500** hoặc **FUNCTION_INVOCATION_FAILED**:
+
+1. **Kiểm tra Environment Variables**  
+   Vercel → Project → **Settings** → **Environment Variables**. Đảm bảo có: `DB_USER`, `DB_HOST`, `DB_NAME`, `DB_PASSWORD`, `JWT_SECRET` (và `CRON_SECRET` nếu dùng cron). Sau khi sửa env, **Redeploy** (Deployments → ⋮ → Redeploy).
+
+2. **Xem log lỗi thật**  
+   Vercel → **Deployments** → chọn deployment mới nhất → tab **Functions** → chọn function `api/index` (hoặc tương ứng) → **Logs** / **Realtime**. Lỗi DB (connection refused, timeout, auth failed) hoặc thiếu env sẽ hiện stack trace ở đây.
+
+3. **Database**  
+   DB phải cho phép kết nối từ Vercel (IP public hoặc dùng Postgres serverless như Neon/Supabase). Nếu dùng SSL: một số host cần `?sslmode=require` trong connection string hoặc cấu hình `pg` tương ứng.
+
+4. **Test nhanh**  
+   Gọi `GET https://<your-app>.vercel.app/api/v1/health` — nếu trả 200 thì API đã chạy; nếu 500 thì xem log function như bước 2.
 
 ## Giới hạn cần lưu ý
 
