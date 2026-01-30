@@ -32,8 +32,15 @@ export function createApp(): express.Express {
     });
     app.use('/api/', limiter);
 
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
+    // On Vercel, req.body may already be set by the platform — skip parsing to avoid crash
+    app.use((req, res, next) => {
+        if (process.env.VERCEL && req.body !== undefined) return next();
+        express.json()(req, res, next);
+    });
+    app.use((req, res, next) => {
+        if (process.env.VERCEL && req.body !== undefined) return next();
+        express.urlencoded({ extended: true })(req, res, next);
+    });
     app.use(sanitizeInput);
 
     app.use((req, res, next) => {
