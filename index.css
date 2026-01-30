@@ -1,0 +1,305 @@
+/* Data Flow Animation - Blue/Cyan digital style */
+
+/* Keyframes for flowing bands */
+@keyframes dataFlowBand {
+  0% {
+    transform: translateX(-100%) translateY(-50%) rotate(-45deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(200%) translateY(50%) rotate(-45deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes dataFlowBandReverse {
+  0% {
+    transform: translateX(100%) translateY(50%) rotate(-45deg);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(-200%) translateY(-50%) rotate(-45deg);
+    opacity: 0.2;
+  }
+}
+
+@keyframes dataFlowPath {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -20;
+  }
+}
+
+@keyframes dataFlowDot {
+  0%, 100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes dataFlowDoc {
+  0% {
+    transform: translate(-60px, -30px) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(60px, 30px) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes dataFlowDoc2 {
+  0% {
+    transform: translate(50px, 40px) scale(0.5);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.8;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50px, -40px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes dataFlowPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4);
+  }
+  50% {
+    opacity: 0.9;
+    box-shadow: 0 0 12px 4px rgba(59, 130, 246, 0.25);
+  }
+}
+
+/* Band base styles */
+.data-flow-band {
+  position: absolute;
+  width: 80%;
+  height: 12px;
+  left: -20%;
+  top: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(6, 182, 212, 0.2),
+    rgba(59, 130, 246, 0.5),
+    rgba(14, 165, 233, 0.3),
+    transparent
+  );
+  border-radius: 6px;
+  animation: dataFlowBand 2.5s ease-in-out infinite;
+}
+
+.data-flow-band-1 {
+  animation-delay: 0s;
+  top: 35%;
+}
+
+.data-flow-band-2 {
+  animation-delay: 0.4s;
+  top: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(14, 165, 233, 0.15),
+    rgba(6, 182, 212, 0.4),
+    rgba(59, 130, 246, 0.25),
+    transparent
+  );
+  animation-direction: reverse;
+  animation-duration: 2.2s;
+}
+
+.data-flow-band-3 {
+  animation-delay: 0.8s;
+  top: 65%;
+  height: 8px;
+  animation: dataFlowBandReverse 2.8s ease-in-out infinite;
+}
+
+/* Circuit path animation */
+.data-flow-path {
+  animation: dataFlowPath 1.5s linear infinite;
+}
+
+.data-flow-path-delay {
+  animation-delay: 0.5s;
+}
+
+.data-flow-dot {
+  animation: dataFlowDot 1.2s ease-in-out infinite;
+}
+
+.data-flow-dot-delay {
+  animation-delay: 0.4s;
+}
+
+.data-flow-dot-delay-2 {
+  animation-delay: 0.8s;
+}
+
+/* Document icons floating */
+.data-flow-doc {
+  position: absolute;
+  animation: dataFlowDoc 2.5s ease-in-out infinite;
+}
+
+.data-flow-doc-1 {
+  top: 25%;
+  left: 15%;
+}
+
+.data-flow-doc-2 {
+  top: 60%;
+  right: 20%;
+  animation-name: dataFlowDoc2;
+  animation-delay: 0.6s;
+}
+
+.data-flow-pulse {
+  animation: dataFlowPulse 1.5s ease-in-out infinite;
+}
+
+/* On dark background - lighter bands & elements */
+.data-flow-on-dark .data-flow-band {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    rgba(165, 243, 252, 0.4),
+    rgba(147, 197, 253, 0.35),
+    transparent
+  );
+}
+
+.data-flow-on-dark .data-flow-band-2 {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(224, 242, 254, 0.2),
+    rgba(186, 230, 253, 0.45),
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+}
+
+/* Page transition animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Background shimmer for auth/login screens */
+@keyframes bgShimmer {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.4; }
+}
+
+.animate-bg-shimmer {
+  animation: bgShimmer 6s ease-in-out infinite;
+}
+
+/* Button loading dots */
+@keyframes buttonDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.btn-loading-dots span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 2px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: buttonDot 1.2s ease-in-out infinite;
+}
+
+.btn-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.btn-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Tab content transition */
+.tab-content-enter {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.tab-content-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}

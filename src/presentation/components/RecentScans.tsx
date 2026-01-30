@@ -43,7 +43,7 @@ const RecentScans: React.FC<RecentScansProps> = ({ onScanSelect }) => {
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-500" />
@@ -63,7 +63,7 @@ const RecentScans: React.FC<RecentScansProps> = ({ onScanSelect }) => {
                     <button
                         key={scan.id}
                         onClick={() => onScanSelect(scan.qrCode)}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left border border-transparent hover:border-slate-100"
                     >
                         <div className={`p-2 rounded-lg ${scan.status === 'found' ? 'bg-green-50' : 'bg-orange-50'}`}>
                             {scan.status === 'found' ? (

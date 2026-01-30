@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -6,6 +5,7 @@ import {
 } from 'recharts';
 import { TrendingUp, AlertTriangle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import DataFlowLoader from './DataFlowLoader';
 
 const AnalyticsBoard: React.FC = () => {
   const { overview, timeline, departments, loading, error, lastUpdated, refresh } = useAnalytics();
@@ -21,6 +21,9 @@ const AnalyticsBoard: React.FC = () => {
   if (loading) {
     return (
       <div className="p-4 space-y-6">
+        <div className="flex justify-center py-4">
+          <DataFlowLoader message="Đang tải báo cáo..." size="md" />
+        </div>
         {/* Header skeleton */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -33,7 +36,7 @@ const AnalyticsBoard: React.FC = () => {
         {/* Stat cards skeleton */}
         <div className="grid grid-cols-2 gap-4">
           {[1, 2].map(i => (
-            <div key={i} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <div key={i} className="bg-white p-4 rounded-2xl shadow-md border border-slate-200">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-4 h-4 bg-slate-200 rounded animate-pulse"></div>
                 <div className="h-3 bg-slate-200 rounded w-16 animate-pulse"></div>
@@ -45,7 +48,7 @@ const AnalyticsBoard: React.FC = () => {
         </div>
 
         {/* Bar chart skeleton */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+        <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200">
           <div className="h-4 bg-slate-200 rounded w-40 mb-4 animate-pulse"></div>
           <div className="h-48 flex items-end justify-around gap-2 px-4">
             {[40, 60, 35, 75, 50, 45, 30].map((height, i) => (
@@ -59,7 +62,7 @@ const AnalyticsBoard: React.FC = () => {
         </div>
 
         {/* Pie chart skeleton */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+        <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200 flex items-center gap-4">
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-slate-200 rounded w-32 animate-pulse"></div>
             <div className="h-3 bg-slate-100 rounded w-28 animate-pulse"></div>
@@ -71,7 +74,7 @@ const AnalyticsBoard: React.FC = () => {
         <div className="space-y-3">
           <div className="h-4 bg-slate-200 rounded w-36 animate-pulse"></div>
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div key={i} className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
               <div className="h-3 bg-slate-200 rounded w-24 animate-pulse"></div>
               <div className="flex items-center gap-3 w-1/2">
                 <div className="flex-1 h-2 bg-slate-100 rounded-full animate-pulse"></div>
@@ -129,7 +132,7 @@ const AnalyticsBoard: React.FC = () => {
         </button>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+        <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200">
           <div className="flex items-center gap-2 text-blue-600 mb-2">
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs font-semibold uppercase">Tổng hồ sơ</span>
@@ -137,7 +140,7 @@ const AnalyticsBoard: React.FC = () => {
           <div className="text-2xl font-bold">{overview.totalDocs.toLocaleString()}</div>
           <div className="text-[10px] text-slate-400 font-medium">{overview.inTransit} đang luân chuyển</div>
         </div>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+        <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200">
           <div className="flex items-center gap-2 text-red-500 mb-2">
             <AlertTriangle className="w-4 h-4" />
             <span className="text-xs font-semibold uppercase">Điểm nghẽn</span>
@@ -147,7 +150,7 @@ const AnalyticsBoard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+      <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200">
         <h3 className="text-sm font-bold text-slate-800 mb-4">Lưu lượng luân chuyển tuần</h3>
         <div className="h-48 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -165,7 +168,7 @@ const AnalyticsBoard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center">
+      <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200 flex items-center">
         <div className="flex-1">
           <h3 className="text-sm font-bold text-slate-800 mb-1">Trạng thái xử lý</h3>
           <p className="text-xs text-slate-500">{overview.completed} hoàn thành / {overview.totalDocs} tổng</p>
@@ -194,7 +197,7 @@ const AnalyticsBoard: React.FC = () => {
         {departments.map(dept => {
           const performanceColor = dept.performance >= 90 ? 'bg-green-500' : dept.performance >= 70 ? 'bg-orange-500' : 'bg-red-500';
           return (
-            <div key={dept.department} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div key={dept.department} className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
               <span className="text-xs font-medium text-slate-700">{dept.department}</span>
               <div className="flex items-center gap-3 w-1/2">
                 <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">

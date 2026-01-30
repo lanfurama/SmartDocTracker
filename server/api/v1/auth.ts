@@ -15,8 +15,17 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-    email: z.string().email('Invalid email format'),
-    password: z.string().min(1, 'Password is required')
+    email: z.string().min(1, 'Vui lòng nhập email').email('Email không đúng định dạng'),
+    password: z.string().min(1, 'Vui lòng nhập mật khẩu')
+});
+
+const updateProfileSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters')
+});
+
+const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'New password must be at least 8 characters')
 });
 
 /**
@@ -55,6 +64,28 @@ router.post('/refresh', authenticate, asyncHandler(async (req: AuthRequest, res)
     const user = req.user!;
     const token = await authService.refreshToken(user.userId, user.email, user.role);
     res.json({ token });
+}));
+
+/**
+ * PATCH /api/v1/auth/profile - Update profile (name)
+ * Requires authentication
+ */
+router.patch('/profile', authenticate, asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user!.userId;
+    const validated = updateProfileSchema.parse(req.body);
+    const result = await authService.updateProfile(userId, validated);
+    res.json(result);
+}));
+
+/**
+ * PATCH /api/v1/auth/password - Change password
+ * Requires authentication
+ */
+router.patch('/password', authenticate, asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user!.userId;
+    const validated = changePasswordSchema.parse(req.body);
+    await authService.changePassword(userId, validated.currentPassword, validated.newPassword);
+    res.json({ success: true });
 }));
 
 export default router;

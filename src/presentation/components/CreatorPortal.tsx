@@ -82,7 +82,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
       {/* Creation Form Modal */}
       {isCreating && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm">
-          <div className="bg-white w-full rounded-3xl p-6 animate-in zoom-in-95 duration-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white w-full rounded-3xl p-6 animate-zoom-in shadow-2xl border-2 border-slate-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-slate-800 mb-6">Tạo hồ sơ mới</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -93,7 +93,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                   type="text"
                   value={formData.title}
                   onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
                   placeholder="Ví dụ: Hợp đồng đại lý X"
                 />
               </div>
@@ -103,7 +103,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                 <textarea
                   value={formData.description}
                   onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
                   placeholder="Nhập nội dung ghi chú cho hồ sơ..."
                   rows={3}
                 />
@@ -115,7 +115,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                   <select
                     value={formData.department}
                     onChange={e => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm"
+                    className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
                   >
                     {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
                   </select>
@@ -125,7 +125,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                   <select
                     value={formData.category}
                     onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-slate-50 border-slate-200 rounded-2xl p-4 text-sm"
+                    className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
                   >
                     {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
@@ -144,8 +144,13 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl text-sm font-bold shadow-xl shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl text-sm font-bold shadow-xl shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
+                  {isLoading ? (
+                    <span className="btn-loading-dots flex items-center">
+                      <span /><span /><span />
+                    </span>
+                  ) : null}
                   {isLoading ? 'Đang tạo...' : 'Xác nhận'}
                 </button>
               </div>
@@ -157,9 +162,9 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
       {/* Print Preview Modal */}
       {showPrintModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-blue-600/90 p-6 backdrop-blur-sm">
-          <div className="bg-white w-full rounded-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+          <div className="bg-white w-full rounded-3xl overflow-hidden animate-slide-in-bottom border-2 border-slate-200">
             <div className="bg-slate-50 p-8 flex flex-col items-center">
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
+              <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-200 mb-6">
                 <div className="w-48 h-48 bg-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden">
                   <QrCode className="w-32 h-32 text-white" />
                   <div className="absolute top-0 left-0 w-full h-1 bg-blue-400 opacity-50 animate-pulse"></div>
@@ -197,7 +202,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
           <div
             key={doc.id}
             onClick={() => onSelectDoc(doc)}
-            className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4 active:bg-slate-50 transition-colors"
+            className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md space-y-4 active:bg-slate-50 transition-colors cursor-pointer"
           >
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
@@ -216,7 +221,7 @@ const CreatorPortal: React.FC<CreatorPortalProps> = ({ documents, onCreate, onSe
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
                   <MapPin className="w-4 h-4" />

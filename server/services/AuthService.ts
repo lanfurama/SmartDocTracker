@@ -100,7 +100,7 @@ export class AuthService {
         const user = await userRepository.findByEmail(email);
 
         if (!user) {
-            throw new ValidationError('Invalid email or password');
+            throw new ValidationError('Email hoặc mật khẩu không đúng');
         }
 
         // Verify password
@@ -108,7 +108,7 @@ export class AuthService {
 
         if (!isValidPassword) {
             logger.warn('Failed login attempt via service', { email });
-            throw new ValidationError('Invalid email or password');
+            throw new ValidationError('Email hoặc mật khẩu không đúng');
         }
 
         // Generate token
@@ -157,6 +157,64 @@ export class AuthService {
         logger.info('Token refreshed via service', { userId });
 
         return token;
+    }
+
+    /**
+     * Update user profile (name only)
+     */
+    async updateProfile(userId: string, data: { name: string }): Promise<UserProfile> {
+        const trimmed = data.name?.trim() ?? '';
+        if (trimmed.length < 2) {
+            throw new ValidationError('Tên phải có ít nhất 2 ký tự');
+        }
+
+        const user = await userRepository.updateProfile(userId, { name: trimmed });
+
+        if (!user) {
+            throw new NotFoundError('User not found');
+        }
+
+        logger.info('Profile updated via service', { userId });
+
+        return {
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                created_at: user.created_at
+            }
+        };
+    }
+
+    /**
+     * Change user password
+     */
+    async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+        const user = await userRepository.findByIdWithPassword(userId);
+
+        if (!user) {
+            throw new NotFoundError('User not found');
+        }
+
+        const isValid = await verifyPassword(currentPassword, user.password_hash);
+
+        if (!isValid) {
+            throw new ValidationError('Mật khẩu hiện tại không đúng');
+        }
+
+        if (newPassword.length < 8) {
+            throw new ValidationError('Mật khẩu mới phải có ít nhất 8 ký tự');
+        }
+
+        const passwordHash = await hashPassword(newPassword);
+        const updated = await userRepository.updatePassword(userId, passwordHash);
+
+        if (!updated) {
+            throw new NotFoundError('User not found');
+        }
+
+        logger.info('Password changed via service', { userId });
     }
 }
 

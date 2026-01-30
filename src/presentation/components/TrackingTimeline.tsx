@@ -20,7 +20,7 @@ const TrackingTimeline: React.FC<TrackingTimelineProps> = ({ history }) => {
             {index === 0 && <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />}
           </div>
 
-          <div className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div className="flex-1 bg-white rounded-xl p-4 shadow-md border border-slate-200">
             <div className="flex justify-between items-start mb-2">
               <h4 className="font-semibold text-slate-800">{log.action}</h4>
               <span className="text-[10px] font-medium px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full flex items-center gap-1">

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { AppError } from './errors';
 import { logger } from '../utils/logger';
 
@@ -14,8 +15,14 @@ export const errorHandler = (
     let message = 'An unexpected error occurred';
     let isOperational = false;
 
-    // Check if it's our custom AppError
-    if (err instanceof AppError) {
+    // Zod validation errors -> 400 with first error message
+    if (err instanceof z.ZodError) {
+        statusCode = 400;
+        code = 'VALIDATION_ERROR';
+        const first = err.errors[0];
+        message = first?.message ?? 'Dữ liệu không hợp lệ';
+        isOperational = true;
+    } else if (err instanceof AppError) {
         statusCode = err.statusCode;
         code = err.code;
         message = err.message;

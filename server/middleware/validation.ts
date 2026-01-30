@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { ValidationError } from './errors';
 
-// Schema for creating a new document
+// Schema for creating a new document (full payload - internal)
 export const createDocumentSchema = z.object({
     id: z.string().min(1, 'Document ID is required'),
     qrCode: z.string().min(1, 'QR code is required'),
@@ -21,6 +21,14 @@ export const createDocumentSchema = z.object({
         notes: z.string().optional(),
         timestamp: z.string()
     })).optional()
+});
+
+// Schema for "Khởi tạo hồ sơ mới" - user form: title, department, category, notes
+export const createDocumentSimpleSchema = z.object({
+    title: z.string().min(3, 'Tên hồ sơ phải có ít nhất 3 ký tự').max(200, 'Tên hồ sơ quá dài'),
+    department: z.string().min(1, 'Phòng ban là bắt buộc'),
+    category: z.string().min(1, 'Loại chứng từ là bắt buộc'),
+    notes: z.string().optional()
 });
 
 // Schema for document actions

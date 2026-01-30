@@ -42,6 +42,50 @@ export const userRepository = {
     },
 
     /**
+     * Find user by ID including password_hash (for verification)
+     */
+    async findByIdWithPassword(id: string): Promise<any | null> {
+        const result = await getPool().query(
+            'SELECT id, email, password_hash, name, role FROM users WHERE id = $1',
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return result.rows[0];
+    },
+
+    /**
+     * Update user profile (name)
+     */
+    async updateProfile(id: string, data: { name: string }): Promise<any | null> {
+        const result = await getPool().query(
+            'UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, name, role, created_at',
+            [data.name, id]
+        );
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        return result.rows[0];
+    },
+
+    /**
+     * Update user password
+     */
+    async updatePassword(id: string, passwordHash: string): Promise<boolean> {
+        const result = await getPool().query(
+            'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2 RETURNING id',
+            [passwordHash, id]
+        );
+
+        return result.rows.length > 0;
+    },
+
+    /**
      * Check if email already exists
      */
     async existsByEmail(email: string): Promise<boolean> {

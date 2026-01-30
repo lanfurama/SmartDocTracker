@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Document } from '../../domain/entities/Document';
 import { documentService } from '../../application/services/DocumentService';
-import { ActionType } from '../../application/useCases/documentActions';
+import { ActionType, executeDocumentAction } from '../../application/useCases/documentActions';
+import { apiClient, mapDocumentResponseToDocument } from '../../infrastructure/api/apiClient';
 
 export interface UseDocumentsReturn {
     documents: Document[];
@@ -22,6 +23,13 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
     const [searchQuery, setSearchQuery] = useState('');
     const [scanLoading, setScanLoading] = useState(false);
 
+    // Sync documents when initial load from API completes (replace empty list with API result)
+    useEffect(() => {
+        if (initialDocs.length > 0 && documents.length === 0) {
+            setDocuments(initialDocs);
+        }
+    }, [initialDocs]);
+
     const filteredDocs = useMemo(() => {
         return documentService.filterDocuments(documents, searchQuery);
     }, [documents, searchQuery]);
@@ -37,10 +45,10 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
     const handleScanResult = useCallback(async (code: string) => {
         setScanLoading(true);
         try {
-            // Always fetch from API to ensure we have latest data
-            const doc = await documentService.handleScanResult(code);
+            // Quét mã QR → tra cứu hồ sơ qua API (id = mã QR)
+            const raw = await apiClient.getDocumentById(code.trim());
+            const doc = mapDocumentResponseToDocument(raw);
 
-            // Update local state
             setDocuments(prev => {
                 const exists = prev.some(d => d.id === doc.id);
                 if (exists) {
@@ -51,11 +59,8 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
 
             setSelectedDoc(doc);
         } catch (error) {
-            console.error('Failed to lookup document:', error);
-            // Create a placeholder document for unknown QR codes
-            const newDoc = await documentService.handleScanResult(code);
-            setDocuments(prev => [newDoc, ...prev]);
-            setSelectedDoc(newDoc);
+            setScanLoading(false);
+            throw error; // App sẽ bắt và hiển thị NotFoundModal
         } finally {
             setScanLoading(false);
         }
@@ -65,18 +70,33 @@ export const useDocuments = (initialDocs: Document[] = []): UseDocumentsReturn =
         type: ActionType,
         note: string
     ): Promise<{ success: boolean; error?: string }> => {
-        if (!selectedDoc) return { success: false, error: 'No document selected' };
+        if (!selectedDoc) return { success: false, error: 'Chưa chọn hồ sơ' };
 
-        const result = await documentService.performAction(selectedDoc, type, note);
+        const result = await executeDocumentAction(selectedDoc, type, note);
+        if (!result.success) return { success: false, error: result.error };
 
-        if (result.success && result.document) {
-            setDocuments(prev => prev.map(d =>
-                d.id === result.document!.id ? result.document! : d
-            ));
-            setSelectedDoc(result.document);
+        const doc = result.document!;
+        const newLog = doc.history[0];
+        const payload = {
+            newStatus: doc.currentStatus,
+            action: newLog.action,
+            location: newLog.location,
+            user: newLog.user,
+            notes: newLog.notes,
+            type: newLog.type,
+            updateDate: newLog.timestamp
+        };
+
+        try {
+            const raw = await apiClient.updateDocumentStatus(selectedDoc.id, payload);
+            const updated = mapDocumentResponseToDocument(raw);
+            setDocuments(prev => prev.map(d => d.id === updated.id ? updated : d));
+            setSelectedDoc(updated);
+            return { success: true };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái';
+            return { success: false, error: message };
         }
-
-        return { success: result.success, error: result.error };
     }, [selectedDoc]);
 
     return {

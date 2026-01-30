@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export type TabType = 'home' | 'scan' | 'analytics' | 'creator';
+export type TabType = 'home' | 'scan' | 'analytics' | 'creator' | 'support';
 
 export interface UseScannerReturn {
     showScanner: boolean;

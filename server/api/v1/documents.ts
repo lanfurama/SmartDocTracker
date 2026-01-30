@@ -1,6 +1,6 @@
 import express from 'express';
 import { asyncHandler } from '../../middleware/errorHandler';
-import { validate, createDocumentSchema, documentActionSchema } from '../../middleware/validation';
+import { validate, createDocumentSimpleSchema, documentActionSchema } from '../../middleware/validation';
 import { documentService } from '../../services';
 
 const router = express.Router();
@@ -17,9 +17,9 @@ router.get('/:id', asyncHandler(async (req, res) => {
     res.json(doc);
 }));
 
-// POST / - Create new document
-router.post('/', validate(createDocumentSchema), asyncHandler(async (req, res) => {
-    const result = await documentService.createDocument(req.body);
+// POST / - Khởi tạo hồ sơ mới (title, department, category, notes)
+router.post('/', validate(createDocumentSimpleSchema), asyncHandler(async (req, res) => {
+    const result = await documentService.createDocumentFromForm(req.body);
     res.status(201).json(result);
 }));
 

@@ -16,7 +16,7 @@ const NotFoundModal: React.FC<NotFoundModalProps> = ({
 }) => {
     return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl border-2 border-slate-200 max-w-md w-full overflow-hidden animate-zoom-in">
                 {/* Header */}
                 <div className="bg-gradient-to-br from-orange-500 to-red-600 p-6 relative">
                     <button

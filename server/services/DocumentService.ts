@@ -1,5 +1,6 @@
 import { documentRepository, CreateDocumentData, UpdateStatusData, DocumentFilters } from '../repositories/documentRepository';
 import { logger } from '../utils/logger';
+import { generateDocId } from '../utils/docId';
 import { NotFoundError, ConflictError, ValidationError } from '../middleware/errors';
 
 export interface CreateDocumentInput extends CreateDocumentData { }
@@ -7,6 +8,30 @@ export interface CreateDocumentInput extends CreateDocumentData { }
 export interface CreateDocumentResult {
     status: string;
     id: string;
+}
+
+/** Input for "Khởi tạo hồ sơ mới" form: title, department, category, notes */
+export interface CreateDocumentFormInput {
+    title: string;
+    department: string;
+    category: string;
+    notes?: string;
+}
+
+/** Response shape for frontend after creating document (id, qrCode, title, department, category, currentStatus, currentHolder, lastUpdate, createdAt, isBottleneck, history) */
+export interface CreateDocumentFormResult {
+    id: string;
+    qrCode: string;
+    title: string;
+    description?: string;
+    department: string;
+    category: string;
+    currentStatus: string;
+    currentHolder: string;
+    lastUpdate: string;
+    createdAt: string;
+    isBottleneck: boolean;
+    history: any[];
 }
 
 export interface DocumentActionInput extends UpdateStatusData {
@@ -68,27 +93,67 @@ export class DocumentService {
     }
 
     /**
-     * Create new document
-     * Business rules:
-     * - QR code must be unique
-     * - Initial status must be valid
-     * - History entries are optional
+     * Create new document (full payload - internal use)
      */
     async createDocument(input: CreateDocumentInput): Promise<CreateDocumentResult> {
-        // Check QR code uniqueness
         const exists = await documentRepository.existsByQrCode(input.qrCode);
         if (exists) {
             throw new ConflictError(`Document with QR code '${input.qrCode}' already exists`);
         }
-
-        // Create document
         const id = await documentRepository.create(input);
-
         logger.info('Document created via service', { documentId: id, qrCode: input.qrCode });
+        return { status: 'created', id };
+    }
 
+    /**
+     * Khởi tạo hồ sơ mới: create document from form (title, department, category, notes).
+     * Generates id/qrCode, sets initial status SENDING, returns full document for frontend.
+     */
+    async createDocumentFromForm(input: CreateDocumentFormInput): Promise<CreateDocumentFormResult> {
+        const now = new Date().toISOString();
+        let id = generateDocId(input.department, input.category);
+        const maxRetries = 5;
+        for (let i = 0; i < maxRetries; i++) {
+            const exists = await documentRepository.existsByQrCode(id);
+            if (!exists) break;
+            id = generateDocId(input.department, input.category);
+            if (i === maxRetries - 1) {
+                throw new ConflictError('Không thể tạo mã hồ sơ duy nhất, vui lòng thử lại');
+            }
+        }
+
+        const data: CreateDocumentData = {
+            id,
+            qrCode: id,
+            title: input.title,
+            description: input.notes ?? '',
+            department: input.department,
+            category: input.category,
+            currentStatus: 'SENDING',
+            currentHolder: 'Người tạo',
+            createdAt: now,
+            history: [
+                { action: 'Khởi tạo', location: 'Hệ thống', user: 'Người tạo', type: 'in', timestamp: now }
+            ]
+        };
+
+        await documentRepository.create(data);
+        logger.info('Document created from form', { documentId: id, title: input.title });
+
+        const doc = await this.getDocumentById(id);
         return {
-            status: 'created',
-            id
+            id: doc.id,
+            qrCode: doc.qrCode,
+            title: doc.title,
+            description: doc.description || undefined,
+            department: doc.departmentId,
+            category: doc.categoryId,
+            currentStatus: doc.currentStatus,
+            currentHolder: doc.currentHolder,
+            lastUpdate: doc.updatedAt,
+            createdAt: doc.createdAt,
+            isBottleneck: doc.isBottleneck,
+            history: doc.history
         };
     }
 

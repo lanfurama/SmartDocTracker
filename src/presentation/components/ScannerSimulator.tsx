@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, X, AlertCircle, Loader } from 'lucide-react';
+import { Camera, X, AlertCircle } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
+import DataFlowLoader from './DataFlowLoader';
 
 interface ScannerSimulatorProps {
   onScan: (code: string) => void;
@@ -136,8 +137,12 @@ const ScannerSimulator: React.FC<ScannerSimulatorProps> = ({ onScan, onClose }) 
         {/* Loading state */}
         {isLoading && !cameraError && (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader className="w-12 h-12 animate-spin mb-4 text-blue-500" />
-            <p className="text-white/80">Đang khởi động camera...</p>
+            <DataFlowLoader
+              message="Đang khởi động camera..."
+              size="lg"
+              variant="onDark"
+              className="[&_p]:!text-white/90"
+            />
           </div>
         )}
 
