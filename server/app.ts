@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -45,6 +46,14 @@ export function createApp(): express.Express {
     });
 
     app.use('/api/v1', apiV1Router);
+
+    // On Vercel: serve static + SPA fallback (root server.ts is the entry; no api/ handler)
+    if (process.env.VERCEL) {
+        const dist = path.join(process.cwd(), 'dist');
+        app.use(express.static(dist));
+        app.get('*', (_req, res) => res.sendFile(path.join(dist, 'index.html')));
+    }
+
     app.use(errorHandler);
 
     return app;

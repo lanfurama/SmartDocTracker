@@ -3,7 +3,7 @@
 Project này **có thể chạy trên Vercel** với cấu hình hiện tại. Đã chuẩn bị:
 
 - **Frontend**: Vite build → static trong `dist/`, SPA rewrite về `/index.html`.
-- **API**: Express chạy dưới dạng **Vercel Serverless Function** (entry `api/index.ts` + rewrite `/api/:path*` → `/api?path=:path*`).
+- **API**: Express chạy qua **entry tại root** (`server.ts`), không dùng `api/` handler — Vercel gọi trực tiếp Express với req/res chuẩn Node, tránh lỗi FUNCTION_INVOCATION_FAILED.
 - **Cron**: Job bottleneck chạy hàng giờ qua Vercel Cron, gọi `/api/v1/cron/bottleneck`.
 
 ## Điều kiện cần có
